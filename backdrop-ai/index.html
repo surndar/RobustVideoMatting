@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BackdropAI — RVM Matting Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ══════════════════ NAVBAR ══════════════════ -->
+<nav class="navbar" id="navbar">
+  <div class="nav-brand">
+    <svg class="nav-logo" viewBox="0 0 36 36" fill="none">
+      <rect width="36" height="36" rx="10" fill="url(#ng)"/>
+      <path d="M9 26 L18 10 L27 26" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="18" cy="18" r="3.5" fill="white" opacity="0.85"/>
+      <defs><linearGradient id="ng" x1="0" y1="0" x2="36" y2="36">
+        <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#06b6d4"/>
+      </linearGradient></defs>
+    </svg>
+    <span class="brand-text">Backdrop<span class="grad">AI</span></span>
+    <span class="brand-tag">RVM Studio</span>
+  </div>
+  <div class="nav-right">
+    <div class="server-status" id="serverStatus">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Connecting…</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<section class="hero" id="heroSection">
+  <div class="hero-glow g1"></div>
+  <div class="hero-glow g2"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="bd"></span> Powered by RobustVideoMatting + nexacx Despill</div>
+    <h1 class="hero-title">Professional Video<br/><span class="grad">Matting Studio</span></h1>
+    <p class="hero-sub">Upload any video, let RVM extract alpha + foreground, then apply nexacx edge cleanup &amp; despill — output Alpha Matte, Green Screen, and Transparent WebM in one click.</p>
+
+    <div class="output-badges">
+      <div class="ob ob-alpha">
+        <svg viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="4" fill="#000"/><ellipse cx="10" cy="11" rx="4" ry="5" fill="#fff"/><circle cx="10" cy="6" r="2.5" fill="#fff"/></svg>
+        Alpha Matte
+      </div>
+      <div class="ob ob-green">
+        <svg viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="4" fill="#00c853"/><ellipse cx="10" cy="11" rx="4" ry="5" fill="#b8f5b8" opacity="0.7"/><circle cx="10" cy="6" r="2.5" fill="#b8f5b8" opacity="0.7"/></svg>
+        Green Screen
+      </div>
+      <div class="ob ob-trans">
+        <svg viewBox="0 0 20 20" fill="none"><rect width="10" height="10" fill="#888"/><rect x="10" y="10" width="10" height="10" fill="#888"/><rect x="10" y="0" width="10" height="10" fill="#444"/><rect x="0" y="10" width="10" height="10" fill="#444"/></svg>
+        Transparent
+      </div>
+      <div class="ob ob-composite">
+        <svg viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="4" fill="#1e2040"/><path d="M2 14 q4-8 8-4 q4 4 8-4" stroke="#6366f1" stroke-width="1.5" fill="none"/></svg>
+        Composite
+      </div>
+    </div>
+
+    <button class="btn btn-hero" id="heroStartBtn">
+      Start Processing
+      <svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</section>
+
+<!-- ══════════════════ MAIN APP ══════════════════ -->
+<main class="app-main" id="appMain" style="display:none">
+
+  <!-- ── LEFT PANEL: Controls ── -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Step 1: Upload -->
+    <div class="sidebar-card" id="cardUpload">
+      <div class="card-step"><span class="step-num">01</span><span class="step-label">Input Video</span></div>
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">
+          <svg viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="23" stroke="url(#dg)" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <path d="M24 32V16M16 22l8-8 8 8" stroke="url(#dg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs><linearGradient id="dg" x1="4" y1="4" x2="44" y2="44">
+              <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#06b6d4"/>
+            </linearGradient></defs>
+          </svg>
+        </div>
+        <p class="drop-title">Drop video here</p>
+        <p class="drop-sub">MP4, MOV, WebM — up to 4 GB</p>
+        <button class="btn btn-sm btn-primary" id="chooseVideoBtn">Choose File</button>
+        <input type="file" id="fileInput" accept="video/*" hidden/>
+      </div>
+      <div class="video-info" id="videoInfo" style="display:none">
+        <div class="vi-row"><span>File</span><span id="viName">—</span></div>
+        <div class="vi-row"><span>Resolution</span><span id="viRes">—</span></div>
+        <div class="vi-row"><span>Duration</span><span id="viDur">—</span></div>
+        <div class="vi-row"><span>FPS</span><span id="viFps">—</span></div>
+        <button class="btn btn-ghost btn-sm mt8" id="changeVideoBtn">Change Video</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Background -->
+    <div class="sidebar-card disabled-card" id="cardBg">
+      <div class="card-step"><span class="step-num">02</span><span class="step-label">Background Image</span></div>
+      <p class="card-desc">Used for the composite preview output. Optional — defaults to studio_background.png.</p>
+      <div class="bg-upload-area" id="bgUploadArea">
+        <img id="bgThumb" class="bg-thumb" style="display:none"/>
+        <div class="bg-placeholder" id="bgPlaceholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span>studio_background.png</span>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm mt8" id="chooseBgBtn">Upload Custom BG</button>
+      <input type="file" id="bgInput" accept="image/*" hidden/>
+    </div>
+
+    <!-- Step 3: Despill Settings -->
+    <div class="sidebar-card disabled-card" id="cardDespill">
+      <div class="card-step"><span class="step-num">03</span><span class="step-label">Despill Settings</span></div>
+
+      <div class="hint-table" id="despillHintTable">
+        <div class="hint-row problem"><span class="ht-icon">⚠</span><span>What you see</span><span>→ Use this</span></div>
+        <div class="hint-row" id="hint1">
+          <span class="ht-icon">👤</span>
+          <span>Skin/clothes look pale</span>
+          <button class="hint-apply" data-action="pale">Apply</button>
+        </div>
+        <div class="hint-row" id="hint2">
+          <span class="ht-icon">🟢</span>
+          <span>Green clothes lost color</span>
+          <button class="hint-apply" data-action="green-clothing">Apply</button>
+        </div>
+        <div class="hint-row" id="hint3">
+          <span class="ht-icon">✂</span>
+          <span>Green outline at edges</span>
+          <button class="hint-apply" data-action="edge-outline">Apply</button>
+        </div>
+        <div class="hint-row" id="hint4">
+          <span class="ht-icon">✅</span>
+          <span>Everything looks fine</span>
+          <button class="hint-apply" data-action="default">Apply</button>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="sg-row">
+          <label class="sg-label">Despill Strength</label>
+          <div class="sg-control">
+            <input type="range" class="slider" id="despillSlider" min="0" max="100" value="50"/>
+            <span class="slider-val" id="despillVal">0.50</span>
+          </div>
+        </div>
+        <div class="sg-row">
+          <label class="sg-label">Edge Only Mode</label>
+          <div class="sg-control">
+            <label class="toggle">
+              <input type="checkbox" id="edgeOnlyCheck" checked/>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="sg-hint">Keeps green clothing intact</span>
+          </div>
+        </div>
+        <div class="sg-row" id="edgeWidthRow">
+          <label class="sg-label">Edge Width (px)</label>
+          <div class="sg-control">
+            <input type="range" class="slider" id="edgeWidthSlider" min="3" max="30" value="7"/>
+            <span class="slider-val" id="edgeWidthVal">7</span>
+          </div>
+        </div>
+        <div class="sg-row">
+          <label class="sg-label">Alpha Refine</label>
+          <div class="sg-control">
+            <input type="range" class="slider" id="refineSlider" min="0" max="10" value="0"/>
+            <span class="slider-val" id="refineVal">0.000</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Output Selection -->
+    <div class="sidebar-card disabled-card" id="cardOutputs">
+      <div class="card-step"><span class="step-num">04</span><span class="step-label">Output Selection</span></div>
+      <div class="output-checks">
+        <label class="oc-item">
+          <input type="checkbox" class="oc-check" id="chkAlpha" checked/>
+          <div class="oc-icon alpha-icon-sm"></div>
+          <div class="oc-text">
+            <span class="oc-name">Alpha Matte</span>
+            <span class="oc-desc">White on black — luminance matte</span>
+          </div>
+        </label>
+        <label class="oc-item">
+          <input type="checkbox" class="oc-check" id="chkGreen" checked/>
+          <div class="oc-icon green-icon-sm"></div>
+          <div class="oc-text">
+            <span class="oc-name">Green Screen</span>
+            <span class="oc-desc">Foreground + #00C853 background</span>
+          </div>
+        </label>
+        <label class="oc-item">
+          <input type="checkbox" class="oc-check" id="chkTrans" checked/>
+          <div class="oc-icon trans-icon-sm"></div>
+          <div class="oc-text">
+            <span class="oc-name">Transparent WebM</span>
+            <span class="oc-desc">VP9 RGBA — true alpha transparency</span>
+          </div>
+        </label>
+        <label class="oc-item">
+          <input type="checkbox" class="oc-check" id="chkComposite" checked/>
+          <div class="oc-icon comp-icon-sm"></div>
+          <div class="oc-text">
+            <span class="oc-name">Composite Preview</span>
+            <span class="oc-desc">Despill + composited on new BG</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="device-row">
+        <label class="sg-label">Compute Device</label>
+        <select class="select-input" id="deviceSelect">
+          <option value="cpu">CPU</option>
+          <option value="cuda">CUDA (GPU)</option>
+          <option value="mps">MPS (Apple Silicon)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Run Button -->
+    <button class="btn btn-run" id="runBtn" disabled>
+      <svg viewBox="0 0 24 24" fill="none"><polygon points="5,3 19,12 5,21" fill="currentColor"/></svg>
+      Run Pipeline
+    </button>
+  </aside>
+
+  <!-- ── MAIN CONTENT ── -->
+  <div class="content-area" id="contentArea">
+
+    <!-- Progress Panel -->
+    <div class="progress-panel" id="progressPanel" style="display:none">
+      <div class="pp-header">
+        <div class="pp-title">
+          <div class="pp-spinner" id="ppSpinner"></div>
+          <span id="ppTitle">Processing…</span>
+        </div>
+        <span class="pp-pct" id="ppPct">0%</span>
+      </div>
+      <div class="pp-bar">
+        <div class="pp-fill" id="ppFill"></div>
+      </div>
+      <div class="pp-log" id="ppLog"></div>
+      <div class="pp-steps" id="ppSteps">
+        <div class="pps-item" data-step="rvm" id="stepRvm">
+          <div class="pps-dot"></div>
+          <span>RVM Inference (MobileNetV3)</span>
+          <span class="pps-status" id="stepRvmSt">Waiting</span>
+        </div>
+        <div class="pps-item" data-step="despill" id="stepDespill">
+          <div class="pps-dot"></div>
+          <span>nexacx Despill + Composite</span>
+          <span class="pps-status" id="stepDespillSt">Waiting</span>
+        </div>
+        <div class="pps-item" data-step="encode" id="stepEncode">
+          <div class="pps-dot"></div>
+          <span>FFmpeg Encode (H.264 / VP9)</span>
+          <span class="pps-status" id="stepEncodeSt">Waiting</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Tabs -->
+    <div class="preview-area" id="previewArea" style="display:none">
+      <div class="preview-tabs" id="previewTabs">
+        <button class="ptab active" data-tab="composite" id="tabComposite">Composite</button>
+        <button class="ptab" data-tab="alpha" id="tabAlpha">Alpha Matte</button>
+        <button class="ptab" data-tab="green" id="tabGreen">Green Screen</button>
+        <button class="ptab" data-tab="transparent" id="tabTransparent">Transparent</button>
+      </div>
+
+      <div class="video-stage" id="videoStage">
+        <!-- Composite -->
+        <div class="vt" id="vtComposite">
+          <video class="preview-vid" id="vidComposite" controls loop></video>
+          <div class="output-overlay">
+            <span class="oo-badge oo-composite">Despill + Composite</span>
+            <a class="oo-dl" id="dlComposite" href="#" download>↓ Download MP4</a>
+          </div>
+        </div>
+        <!-- Alpha -->
+        <div class="vt" id="vtAlpha" style="display:none">
+          <video class="preview-vid" id="vidAlpha" controls loop></video>
+          <div class="output-overlay">
+            <span class="oo-badge oo-alpha">Alpha Matte · White on Black</span>
+            <a class="oo-dl" id="dlAlpha" href="#" download>↓ Download MP4</a>
+          </div>
+        </div>
+        <!-- Green -->
+        <div class="vt" id="vtGreen" style="display:none">
+          <video class="preview-vid" id="vidGreen" controls loop></video>
+          <div class="output-overlay">
+            <span class="oo-badge oo-green">Green Screen · Chroma Key</span>
+            <a class="oo-dl" id="dlGreen" href="#" download>↓ Download MP4</a>
+          </div>
+        </div>
+        <!-- Transparent -->
+        <div class="vt" id="vtTransparent" style="display:none">
+          <div class="checker-wrap">
+            <video class="preview-vid" id="vidTransparent" controls loop></video>
+          </div>
+          <div class="output-overlay">
+            <span class="oo-badge oo-trans">Transparent · VP9 Alpha WebM</span>
+            <a class="oo-dl" id="dlTransparent" href="#" download>↓ Download WebM</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Download All -->
+      <div class="download-all-row" id="downloadAllRow">
+        <div class="dl-all-info">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2v12M5 9l5 5 5-5M3 16h14"/></svg>
+          All outputs ready for download
+        </div>
+        <div class="dl-all-btns" id="dlAllBtns"></div>
+      </div>
+
+      <!-- Commands Reference -->
+      <div class="commands-panel" id="commandsPanel">
+        <div class="cp-header">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7l3 3-3 3M11 13h5"/></svg>
+          FFmpeg Commands Used
+        </div>
+        <pre class="cp-code" id="cpCode"></pre>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state" id="emptyState">
+      <div class="es-icon">
+        <svg viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="38" stroke="url(#esg)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <path d="M28 52 L40 28 L52 52" stroke="url(#esg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="40" cy="38" r="4" fill="url(#esg)"/>
+          <defs><linearGradient id="esg" x1="10" y1="10" x2="70" y2="70">
+            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.6"/>
+          </linearGradient></defs>
+        </svg>
+      </div>
+      <h3>Upload a video to get started</h3>
+      <p>BackdropAI will run RVM inference to extract the foreground &amp; alpha matte, then apply nexacx despill for perfect edge cleanup — output in all three formats simultaneously.</p>
+      <div class="es-pipeline">
+        <div class="esp-step">
+          <div class="esp-icon rvm-icon">RVM</div>
+          <span>Inference</span>
+        </div>
+        <div class="esp-arrow">→</div>
+        <div class="esp-step">
+          <div class="esp-icon nx-icon">NX</div>
+          <span>Despill</span>
+        </div>
+        <div class="esp-arrow">→</div>
+        <div class="esp-step">
+          <div class="esp-icon ff-icon">FF</div>
+          <span>FFmpeg</span>
+        </div>
+        <div class="esp-arrow">→</div>
+        <div class="esp-step">
+          <div class="esp-icon out-icon">3×</div>
+          <span>Outputs</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content-area -->
+</main><!-- /app-main -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Scripts -->
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+outputs/
+uploads/
+*.mov
+*.mp4
+__pycache__/
+.venv/
+venv/
